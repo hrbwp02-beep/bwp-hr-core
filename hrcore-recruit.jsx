@@ -32,13 +32,7 @@ function HRCRecruitIntake({ nav }) {
       <Crumb items={[{ label: "HR Core" }, { label: "รับจากสรรหา" }]} />
       <div className="page-head">
         <div><h1>รับพนักงานจากระบบสรรหา</h1><p>ผู้สมัครที่ผ่านอนุมัติจากระบบ bwp-recruitment · สร้างเป็นพนักงานใน HR Core</p></div>
-        <div className="row wrap" style={{ gap: 9 }}>
-          {(HRC.settings && HRC.settings.recruit_app_url) && (
-            <a className="btn btn-ghost" href={HRC.settings.recruit_app_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-              <Icon name="briefcase" size={16} />เปิดระบบสรรหา
-            </a>
-          )}
-          <button className="btn btn-ghost" onClick={load}><Icon name="refresh" size={16} />โหลดใหม่</button>
+        <div className="row wrap" style={{ gap: 9 }}>          <button className="btn btn-ghost" onClick={load}><Icon name="refresh" size={16} />โหลดใหม่</button>
         </div>
       </div>
 

@@ -116,15 +116,10 @@ function HRCoreApp() {
               <Icon name={n.icon} size={20} stroke={1.9} /><span className="lbl">{n.label}</span>
             </button>
           ))}
-          <div className="side-section">ระบบอื่น</div>
-          <a className="nav-item" href="https://hrbwp02-beep.github.io/bestworld-hr-performance/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-            <Icon name="eval" size={20} stroke={1.9} /><span className="lbl">ระบบประเมินผล</span>
+          <div className="side-section">BWP HR Connect</div>
+          <a className="nav-item" href="https://hrbwp02-beep.github.io/bwp-hr-connect/" style={{ textDecoration: "none" }}>
+            <Icon name="chevLeft" size={20} stroke={1.9} /><span className="lbl">กลับหน้าหลัก</span>
           </a>
-          {(HRC.settings && HRC.settings.recruit_app_url) && (
-            <a className="nav-item" href={HRC.settings.recruit_app_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-              <Icon name="briefcase" size={20} stroke={1.9} /><span className="lbl">ระบบสรรหา</span>
-            </a>
-          )}
         </nav>
         <div className="side-foot">
           <div className="side-user">
@@ -210,7 +205,7 @@ function HRCLogin({ onDone }) {
           <button type="submit" className="btn btn-pri" disabled={busy} style={{ padding: 12, marginTop: 4 }}>
             {busy ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
           </button>
-          <a href="https://hrbwp02-beep.github.io/bestworld-hr-performance/" target="_blank" rel="noopener noreferrer" style={{ color: "#9dc0ff", fontSize: 12.5, textAlign: "center", textDecoration: "none" }}>← ไประบบประเมินผล</a>
+          <a href="https://hrbwp02-beep.github.io/bwp-hr-connect/" style={{ color: "#9dc0ff", fontSize: 12.5, textAlign: "center", textDecoration: "none" }}>← กลับหน้าหลัก BWP HR Connect</a>
         </form>
       </div>
     </div>
