@@ -204,12 +204,12 @@ function HRCDeptForm({ dept, onClose }) {
       manager_id: f.manager_id || null, description: f.description.trim() || null, status: f.status,
     };
     let error;
-    if (isEdit) ({ error } = await window.sb.from("departments").update(row).eq("id", dept.id));
+    if (isEdit) ({ error } = await window.sb.from("hr_departments").update(row).eq("id", dept.id));
     else {
       row.id = f.department_code.trim().toLowerCase().replace(/[^a-z0-9_]/g, "_");
       row.color = ["#2563eb", "#0d9488", "#7c3aed", "#e08a00", "#db2777"][(HRC.departments || []).length % 5];
       row.sort = (HRC.departments || []).length;
-      ({ error } = await window.sb.from("departments").insert(row));
+      ({ error } = await window.sb.from("hr_departments").insert(row));
     }
     setBusy(false);
     if (error) { setErr(/duplicate|unique/i.test(error.message) ? "รหัสหน่วยงานนี้มีอยู่แล้ว" : "บันทึกไม่สำเร็จ: " + error.message); return; }

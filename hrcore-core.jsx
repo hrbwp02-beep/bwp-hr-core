@@ -51,7 +51,7 @@ HRC.loadCurrentUser = async () => {
 HRC.load = async () => {
   const [emps, depts, poss, etypes, users, settings] = await Promise.all([
     window.sb.from("employees").select("*").order("employee_code"),
-    window.sb.from("departments").select("*").order("sort"),
+    window.sb.from("hr_departments").select("*").order("sort"),
     window.sb.from("positions").select("*").order("position_name"),
     window.sb.from("employment_types").select("*").order("sort"),
     window.sb.from("app_users").select("*"),
@@ -92,7 +92,7 @@ HRC.isActive = (e) => HRC.ACTIVE_SET.indexOf(e._status || "ACTIVE") > -1;
 /* ---------- เขียน audit จากฝั่งแอป (DB มี trigger อยู่แล้วสำหรับ employees) ---------- */
 HRC.audit = async (action, actionType, entity, entityId, before, after) => {
   try {
-    await window.sb.from("audit_log").insert({
+    await window.sb.from("hr_audit_log").insert({
       actor_email: (HRC.user || {}).email || null, action, action_type: actionType,
       entity, entity_id: entityId ? String(entityId) : null, before: before || null, after: after || null,
     });

@@ -195,7 +195,7 @@ function HRCAudit() {
 
   const reload = async () => {
     setErr("");
-    const { data, error } = await window.sb.from("audit_log").select("*").order("at", { ascending: false }).limit(400);
+    const { data, error } = await window.sb.from("hr_audit_log").select("*").order("at", { ascending: false }).limit(400);
     if (error) { setErr(error.message); setRows([]); return; }
     setRows(data || []);
   };
