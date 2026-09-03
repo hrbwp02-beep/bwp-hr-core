@@ -2,13 +2,13 @@
 
 ศูนย์กลางข้อมูลบุคลากร (HR Master Data) — บริษัท เบสท์เวิลด์ อินเตอร์พลาส จำกัด
 
-**เว็บ:** https://hrbwp02-beep.github.io/bwp-hr-core/
+**เว็บ:** https://bwp-hr-core.vercel.app/
 
 ## ระบบในเครือ BWP HR Connect
 | ระบบ | URL |
 |---|---|
-| HR Core (ที่นี่) | https://hrbwp02-beep.github.io/bwp-hr-core/ |
-| ระบบประเมินผล | https://hrbwp02-beep.github.io/bestworld-hr-performance/ |
+| HR Core (ที่นี่) | https://bwp-hr-core.vercel.app/ |
+| ระบบประเมินผล | https://bwp-hr-eval.vercel.app/ |
 | ระบบสรรหา | https://bwp-recruitment.vercel.app/admin |
 
 ทุกระบบใช้ `employees` ใน Supabase `BWPHRConnect` เป็นแหล่งข้อมูลพนักงานเดียว (Single Source of Truth)

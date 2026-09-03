@@ -117,7 +117,7 @@ function HRCoreApp() {
             </button>
           ))}
           <div className="side-section">BWP HR Connect</div>
-          <a className="nav-item" href="https://hrbwp02-beep.github.io/bwp-hr-connect/" style={{ textDecoration: "none" }}>
+          <a className="nav-item" href="https://bwp-hr-connect.vercel.app/" style={{ textDecoration: "none" }}>
             <Icon name="chevLeft" size={20} stroke={1.9} /><span className="lbl">กลับหน้าหลัก</span>
           </a>
         </nav>
@@ -205,7 +205,7 @@ function HRCLogin({ onDone }) {
           <button type="submit" className="btn btn-pri" disabled={busy} style={{ padding: 12, marginTop: 4 }}>
             {busy ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
           </button>
-          <a href="https://hrbwp02-beep.github.io/bwp-hr-connect/" style={{ color: "#9dc0ff", fontSize: 12.5, textAlign: "center", textDecoration: "none" }}>← กลับหน้าหลัก BWP HR Connect</a>
+          <a href="https://bwp-hr-connect.vercel.app/" style={{ color: "#9dc0ff", fontSize: 12.5, textAlign: "center", textDecoration: "none" }}>← กลับหน้าหลัก BWP HR Connect</a>
         </form>
       </div>
     </div>
