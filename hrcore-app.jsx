@@ -10,6 +10,7 @@ const HRC_NAV = [
   { id: "org", label: "ผังองค์กร", icon: "users", perm: "employee.view" },
   { id: "master", label: "ข้อมูลตั้งต้น", icon: "settings", perm: "position.manage" },
   { id: "attendance", label: "เวลาทำงานและการลา", icon: "clock", perm: "employee.view" },
+  { id: "empsync", label: "นำเข้าทะเบียนพนักงาน", icon: "upload", perm: "employee.edit" },
   { id: "recruit", label: "รับจากสรรหา", icon: "plus", perm: "employee.create" },
   { id: "users", label: "ผู้ใช้ระบบ", icon: "user", perm: "user.manage" },
   { id: "roles", label: "บทบาทและสิทธิ์", icon: "lock", perm: "employee.view" },
@@ -19,6 +20,7 @@ const HRC_TITLES = {
   dashboard: "ภาพรวม", employees: "พนักงาน", employee: "โปรไฟล์พนักงาน", departments: "หน่วยงาน",
   positions: "ตำแหน่งงาน", org: "ผังองค์กร", master: "ข้อมูลตั้งต้น", recruit: "รับจากสรรหา",
   attendance: "เวลาทำงานและการลา",
+  empsync: "นำเข้าทะเบียนพนักงาน",
   users: "ผู้ใช้ระบบ", roles: "บทบาทและสิทธิ์", audit: "บันทึกการใช้งาน",
 };
 
@@ -95,6 +97,7 @@ function HRCoreApp() {
       case "org": return <HRCOrgChart nav={nav} />;
       case "master": return <HRCMasterData />;
       case "attendance": return <HRCAttendance />;
+      case "empsync": return <HRCEmpSync />;
       case "recruit": return <HRCRecruitIntake nav={nav} />;
       case "users": return <HRCUsers />;
       case "roles": return <HRCRoles />;
