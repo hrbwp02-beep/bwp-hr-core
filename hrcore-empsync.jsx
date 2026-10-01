@@ -223,6 +223,31 @@ function HRCEmpSync() {
               {(P.changed_rows || []).length ? (
                 <div className="card card-pad">
                   <div style={{ fontWeight: 700, marginBottom: 8 }}>ข้อมูลที่จะเปลี่ยน ({P.changed_rows.length} คน)</div>
+                {(() => {
+                  const byField = {};
+                  P.changed_rows.forEach((x) => (x.changes || []).forEach((c) => {
+                    byField[c.f] = (byField[c.f] || 0) + 1;
+                  }));
+                  const list = Object.entries(byField).sort((a, b) => b[1] - a[1]);
+                  const many = list.filter(([, n]) => n > P.changed_rows.length * 0.5);
+                  return (
+                    <div style={{ marginBottom: 12 }}>
+                      <div className="row wrap" style={{ gap: 6 }}>
+                        {list.map(([f, n]) => (
+                          <span key={f} className="chip" style={{ cursor: "default" }}>{f} <b>{n}</b></span>
+                        ))}
+                      </div>
+                      {many.length ? (
+                        <div style={{ fontSize: 12, marginTop: 8, lineHeight: 1.7, color: "var(--danger)" }}>
+                          ⚠️ ฟิลด์ “{many.map((x) => x[0]).join("”, “")}” จะถูกเปลี่ยนเกือบทุกคน
+                          — ตรวจดูสักสิบรายการด้านล่างก่อนว่าเป็นการแก้ข้อมูลจริง
+                          หรือเป็นแค่รูปแบบที่ต่างกัน (เช่น ช่องว่างหรือคำนำหน้าชื่อ)
+                          ถ้าเป็นแค่รูปแบบ ควรแก้ที่ไฟล์ก่อนแล้วอัปโหลดใหม่
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })()}
                   <div style={{ maxHeight: 420, overflowY: "auto" }}>
                     {P.changed_rows.map((x) => (
                       <div key={x.employee_id} style={{ padding: "8px 0", borderBottom: "1px solid var(--border-2)" }}>
