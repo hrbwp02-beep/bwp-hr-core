@@ -76,7 +76,8 @@ function HRCEmployeeForm({ emp, onClose, onSaved }) {
   const isEdit = !!emp;
   const [f, setF] = useE1(() => ({
     employee_code: (emp && emp.employee_code) || "",
-    prefix: (emp && emp.prefix) || "นาย",
+    // แก้ไข: คงคำนำหน้าเดิมไว้เสมอ · ถ้าไม่มีให้เว้นว่าง ไม่เดาเป็น "นาย" (เคยทำผู้หญิงกลายเป็นนาย)
+    prefix: emp ? (emp.prefix || "") : "",
     first_name: (emp && emp.first_name) || "",
     last_name: (emp && emp.last_name) || "",
     nickname: (emp && emp.nickname) || "",
@@ -177,7 +178,14 @@ function HRCEmployeeForm({ emp, onClose, onSaved }) {
         <div className="side-section" style={{ padding: 0, color: "var(--text-3)" }}>ข้อมูลส่วนตัว</div>
         <div className="grid" style={{ gridTemplateColumns: "90px 1fr 1fr", gap: 10 }}>
           <F label="คำนำหน้า"><select className="select" value={f.prefix} onChange={(e) => set("prefix", e.target.value)}>
-            {["นาย", "นาง", "นางสาว", "MR.", "MS."].map((x) => <option key={x} value={x}>{x}</option>)}</select></F>
+            {(() => {
+              // รวมคำนำหน้าที่ใช้อยู่จริงในฐานเข้าไปด้วย เพื่อไม่ให้ค่าเดิมของใครหายไป
+              const base = ["นาย", "นาง", "นางสาว", "น.ส.", "MR.", "MS.", "MRS."];
+              const used = (HRC.employees || []).map((e) => (e.prefix || "").trim()).filter(Boolean);
+              const all = Array.from(new Set(base.concat(used, f.prefix ? [f.prefix] : [])));
+              return [<option key="" value="">— ไม่ระบุ —</option>]
+                .concat(all.map((x) => <option key={x} value={x}>{x}</option>));
+            })()}</select></F>
           <F label="ชื่อ" req><input className="input" value={f.first_name} onChange={(e) => set("first_name", e.target.value)} /></F>
           <F label="นามสกุล" req><input className="input" value={f.last_name} onChange={(e) => set("last_name", e.target.value)} /></F>
         </div>
