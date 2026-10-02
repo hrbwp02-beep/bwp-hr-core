@@ -75,7 +75,9 @@ function HRCDrawer({ title, sub, onClose, children, footer, width }) {
     <>
       <div className="scrim" onClick={onClose} />
       <aside role="dialog" aria-modal="true" aria-label={typeof title === "string" ? title : "แผงข้อมูล"}
-        style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: width || 520, maxWidth: "100vw", zIndex: 60,
+        /* zIndex ต้องสูงกว่า .scrim (100) เสมอ — ไม่งั้นแผ่นทึบจะทับแผงนี้
+           ทำให้หน้าจอเบลอ พิมพ์ไม่ได้ และคลิกตรงไหนก็โดน onClose ของแผ่นทึบจนแผงปิดเอง */
+        style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: width || 520, maxWidth: "100vw", zIndex: 101,
                  background: "var(--surface)", borderLeft: "1px solid var(--border)", boxShadow: "var(--shadow-lg)",
                  display: "flex", flexDirection: "column" }}>
         <div className="between" style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", gap: 10 }}>
