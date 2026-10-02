@@ -149,7 +149,7 @@ function HRCEmpSync() {
 
       {!canImport ? (
         <div className="card card-pad">
-          <EmptyState icon="lock" text="คุณไม่มีสิทธิ์นำเข้าข้อมูลพนักงาน"
+          <EmptyState icon="lock" title="คุณไม่มีสิทธิ์นำเข้าข้อมูลพนักงาน"
             sub="ต้องเป็นผู้ดูแลระบบหรือฝ่ายบุคคล" />
         </div>
       ) : (
@@ -189,7 +189,7 @@ function HRCEmpSync() {
                   ยังไม่มีการบันทึกใดๆ ลงฐานข้อมูล — ตรวจรายการด้านล่างแล้วกดยืนยัน
                 </div>
                 <div className="row" style={{ gap: 8, marginTop: 14 }}>
-                  <button className="btn btn-primary" onClick={doImport} disabled={busy}>
+                  <button className="btn btn-pri" onClick={doImport} disabled={busy}>
                     {busy ? "กำลังบันทึก…" : "ยืนยันบันทึก"}
                   </button>
                   <button className="btn" onClick={cancel} disabled={busy}>ยกเลิก</button>

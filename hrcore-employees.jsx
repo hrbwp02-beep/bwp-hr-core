@@ -104,6 +104,7 @@ function HRCEmployeeForm({ emp, onClose, onSaved }) {
     supervisor_fk: (emp && (emp.supervisor_fk || emp.supervisor_id)) || "",
     work_location: (emp && emp.work_location) || "",
     education: (emp && emp.education) || "",
+    level: (emp && emp.level) || "",
   }));
   const [busy, setBusy] = useE1(false);
   const [err, setErr] = useE1("");
@@ -142,6 +143,7 @@ function HRCEmployeeForm({ emp, onClose, onSaved }) {
         position_id: f.position_id || null, position: pos ? pos.position_name : (emp ? emp.position : "-"),
         supervisor_fk: f.supervisor_fk || null, supervisor_id: f.supervisor_fk || null,
         work_location: f.work_location.trim() || null, education: f.education || null,
+        level: f.level.trim() || null,
       };
       let error;
       if (isEdit) {
@@ -222,9 +224,29 @@ function HRCEmployeeForm({ emp, onClose, onSaved }) {
         <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <F label="หน่วยงาน" req><select className="select" value={f.dept} onChange={(e) => { set("dept", e.target.value); set("position_id", ""); }}>
             {(HRC.departments || []).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select></F>
-          <F label="ตำแหน่ง"><select className="select" value={f.position_id} onChange={(e) => set("position_id", e.target.value)}>
+          <F label="ตำแหน่ง"><select className="select" value={f.position_id} onChange={(e) => {
+            set("position_id", e.target.value);
+            // เติมระดับตำแหน่งให้อัตโนมัติจากตำแหน่งที่เลือก ถ้ายังไม่ได้กรอกไว้
+            const p = HRC.posMap[e.target.value];
+            if (p && p.job_level && !f.level) set("level", p.job_level);
+          }}>
             <option value="">— ไม่ระบุ —</option>
             {deptPositions.map((p) => <option key={p.id} value={p.id}>{p.position_name}</option>)}</select></F>
+        </div>
+        <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <F label="ระดับตำแหน่ง">
+            <input className="input" list="hrc-emp-levels" value={f.level}
+              onChange={(e) => set("level", e.target.value)} placeholder="เช่น เจ้าหน้าที่ · หัวหน้างาน" />
+            <datalist id="hrc-emp-levels">
+              {Array.from(new Set(
+                (HRC.employees || []).map((x) => x.level)
+                  .concat((HRC.positions || []).map((p) => p.job_level))
+                  .filter(Boolean)
+              )).map((l) => <option key={l} value={l} />)}
+            </datalist>
+          </F>
+          <F label="วุฒิการศึกษา"><input className="input" value={f.education}
+            onChange={(e) => set("education", e.target.value)} placeholder="เช่น ปริญญาตรี" /></F>
         </div>
         <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <F label="ผู้บังคับบัญชา"><select className="select" value={f.supervisor_fk} onChange={(e) => set("supervisor_fk", e.target.value)}>

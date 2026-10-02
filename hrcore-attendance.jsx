@@ -168,7 +168,7 @@ function HRCAttendance() {
           <p>นำเข้าข้อมูลจากรายงานตอกบัตรรายเดือน · ใช้เป็นข้อมูลของการ์ด "การเข้างานและการลา" ในแดชบอร์ด</p>
         </div>
         {canImport ? (
-          <button className="btn btn-primary" onClick={() => { setOpen(true); setResult(null); setPreview(null); setErr(""); }}>
+          <button className="btn btn-pri" onClick={() => { setOpen(true); setResult(null); setPreview(null); setErr(""); }}>
             ＋ นำเข้าไฟล์
           </button>
         ) : null}
@@ -230,7 +230,7 @@ function HRCAttendance() {
           footer={
             <>
               <button className="btn" onClick={() => setOpen(false)}>ปิด</button>
-              <button className="btn btn-primary" disabled={busy || !preview || !preview.ok.length} onClick={doImport}>
+              <button className="btn btn-pri" disabled={busy || !preview || !preview.ok.length} onClick={doImport}>
                 {busy ? "กำลังนำเข้า…" : preview ? "นำเข้า " + preview.ok.length + " คน" : "เลือกไฟล์ก่อน"}
               </button>
             </>
