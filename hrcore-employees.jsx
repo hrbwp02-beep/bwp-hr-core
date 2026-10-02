@@ -71,6 +71,13 @@ function HRCEmployees({ nav }) {
   );
 }
 
+/* ช่องกรอกพร้อมป้ายชื่อ
+   ⚠️ ต้องประกาศไว้นอกฟอร์มเท่านั้น — ถ้าประกาศข้างในฟอร์ม React จะสร้างคอมโพเนนต์ใหม่
+   ทุกครั้งที่ state เปลี่ยน ทำให้ช่องกรอกถูกสร้างใหม่และเสียโฟกัสทุกตัวอักษร = พิมพ์ไม่ได้ */
+function F({ label, children, req }) {
+  return <div className="field"><label>{label}{req && " *"}</label>{children}</div>;
+}
+
 /* ================= ฟอร์มเพิ่ม/แก้ไขพนักงาน ================= */
 function HRCEmployeeForm({ emp, onClose, onSaved }) {
   const isEdit = !!emp;
@@ -159,10 +166,6 @@ function HRCEmployeeForm({ emp, onClose, onSaved }) {
         : "บันทึกไม่สำเร็จ: " + m);
     } finally { setBusy(false); }
   };
-
-  const F = ({ label, children, req }) => (
-    <div className="field"><label>{label}{req && " *"}</label>{children}</div>
-  );
 
   return (
     <HRCDrawer title={isEdit ? "แก้ไขข้อมูลพนักงาน" : "เพิ่มพนักงานใหม่"}
