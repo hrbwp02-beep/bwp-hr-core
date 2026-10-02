@@ -213,7 +213,7 @@ function HRCAttendance() {
             <Stat icon="chart" label="OT รวม (ชม.)" value={round1(sum("total_ot_hours"))} tone="#0891b2" soft="#e3f3f7" />
           </div>
           <div className="card">
-            <DataTable rows={rows} columns={cols} rowKey="id"
+            <DataTable rows={rows} columns={cols} rowKey={(r) => r.id}
               searchFields={["employee_id", "note"]}
               exportName={"เวลาทำงาน-" + sel} pageSize={25} />
           </div>
