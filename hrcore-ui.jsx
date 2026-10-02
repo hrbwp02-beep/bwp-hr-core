@@ -183,7 +183,7 @@ function DataTable({ rows, columns, rowKey, onRowClick, searchFields, filters, t
             </tr></thead>
             <tbody>
               {view.map((r) => (
-                {/* rowKey รับได้ทั้งฟังก์ชันและชื่อคอลัมน์ — เดิมรับเฉพาะฟังก์ชัน ถ้าส่งข้อความมาจะพังทั้งหน้า */}
+                // rowKey รับได้ทั้งฟังก์ชันและชื่อคอลัมน์ — เดิมรับเฉพาะฟังก์ชัน ถ้าส่งข้อความมาจะพังทั้งหน้า
                 <tr key={typeof rowKey === "function" ? rowKey(r) : (rowKey ? r[rowKey] : r.id)}
                     onClick={onRowClick ? () => onRowClick(r) : undefined}
                   style={onRowClick ? { cursor: "pointer" } : undefined}>
