@@ -10,7 +10,7 @@ const HRC_NAV = [
   { id: "org", label: "ผังองค์กร", icon: "users", perm: "employee.view" },
   { id: "master", label: "ข้อมูลตั้งต้น", icon: "settings", perm: "position.manage" },
   { id: "attendance", label: "เวลาทำงานและการลา", icon: "clock", perm: "employee.view" },
-  { id: "empsync", label: "นำเข้าทะเบียนพนักงาน", icon: "upload", perm: "employee.edit" },
+  { id: "empsync", label: "นำเข้าทะเบียนพนักงาน", icon: "upload", perm: "employee.create" },
   { id: "recruit", label: "รับจากสรรหา", icon: "plus", perm: "employee.create" },
   { id: "users", label: "ผู้ใช้ระบบ", icon: "user", perm: "user.manage" },
   { id: "roles", label: "บทบาทและสิทธิ์", icon: "lock", perm: "employee.view" },
@@ -87,7 +87,10 @@ function HRCoreApp() {
   const allowed = visibleNav.some((n) => n.id === page) || page === "employee";
   const effPage = allowed ? page : "dashboard";
 
-  const Content = () => {
+  // ⚠️ ต้องเรียกเป็นฟังก์ชัน {renderContent()} ห้ามใช้ <Content /> เด็ดขาด
+  // เพราะจะกลายเป็นคอมโพเนนต์ตัวใหม่ทุกครั้งที่เชลล์ re-render (ย่อเมนู ฯลฯ)
+  // ทำให้ React ถอดหน้าที่เปิดอยู่ทิ้งแล้วสร้างใหม่ สถานะของหน้าหายหมด
+  const renderContent = () => {
     switch (effPage) {
       case "dashboard": return <HRCDashboard nav={nav} />;
       case "employees": return <HRCEmployees nav={nav} />;
@@ -152,7 +155,7 @@ function HRCoreApp() {
             <Icon name="logout" size={19} />
           </button>
         </header>
-        <main className="content"><Content /></main>
+        <main className="content">{renderContent()}</main>
       </div>
       <ToastHost />
     </div>

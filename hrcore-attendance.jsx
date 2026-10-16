@@ -51,7 +51,7 @@ function attParseCsv(text) {
 }
 
 function HRCAttendance() {
-  const canImport = HRC.can("employee.edit") || (HRC.user && HRC.user.role === "admin");
+  const canImport = HRC.can("employee.create");
   const nowY = new Date().getFullYear() + 543;
 
   const [periods, setPeriods] = useAT(null);

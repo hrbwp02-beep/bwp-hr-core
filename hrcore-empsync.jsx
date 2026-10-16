@@ -40,7 +40,7 @@ function esThaiDate(d) {
 }
 
 function HRCEmpSync() {
-  const canImport = HRC.can("employee.edit") || (HRC.user && HRC.user.role === "admin");
+  const canImport = HRC.can("employee.create");
 
   const [preview, setPreview] = useES(null);   // ผลตรวจจากโหมดทดลอง
   const [rows, setRows] = useES(null);         // แถวที่อ่านได้จากไฟล์
