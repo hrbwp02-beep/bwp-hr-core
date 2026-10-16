@@ -225,6 +225,7 @@ function HRCAudit() {
         <div><h1>บันทึกการใช้งาน (Audit Log)</h1><p>บันทึกทุกการเปลี่ยนแปลงสำคัญ · แสดง 400 รายการล่าสุด</p></div>
         <button className="btn btn-ghost" onClick={reload}><Icon name="refresh" size={16} />รีเฟรช</button>
       </div>
+      <HRCCleanupFiles />
       <Card>
         <DataTable rows={rows} columns={columns} rowKey={(r) => r.id} pageSize={30}
           searchFields={["actor_email", "action", "entity", "entity_id", "action_type"]}
@@ -233,6 +234,72 @@ function HRCAudit() {
       </Card>
       {detail && <AuditDetail row={detail} onClose={() => setDetail(null)} />}
     </div>
+  );
+}
+
+/* ===== ล้างไฟล์แนบกำพร้า (ไฟล์จากใบสมัครที่กรอกค้างไม่เสร็จ) ===== */
+function HRCCleanupFiles() {
+  const [busy, setBusy] = useA1(false);
+  const [res, setRes] = useA1(null);
+  const [err, setErr] = useA1("");
+
+  const run = async (dryRun) => {
+    setBusy(true); setErr(""); if (dryRun) setRes(null);
+    const { data, error } = await window.sb.functions.invoke("cleanup-orphan-files", {
+      body: { dry_run: dryRun },
+    });
+    setBusy(false);
+    if (error || (data && data.error)) {
+      setErr((data && data.error) || error.message || "เรียกใช้งานไม่สำเร็จ");
+      return;
+    }
+    setRes(data);
+    if (!dryRun) toast("ล้างไฟล์กำพร้า " + data.total_deleted + " ไฟล์แล้ว", "check");
+  };
+
+  return (
+    <Card>
+      <div className="card-pad">
+        <div style={{ fontWeight: 700, marginBottom: 5 }}>ดูแลพื้นที่เก็บไฟล์</div>
+        <p className="muted" style={{ fontSize: 12.5, lineHeight: 1.8, marginTop: 0 }}>
+          ผู้สมัครที่อัปโหลดเอกสารแล้วปิดหน้าไปโดยไม่กดส่ง จะทิ้งไฟล์ค้างไว้โดยไม่มีใบสมัครอ้างถึง
+          ปุ่มนี้จะหาไฟล์เหล่านั้นแล้วลบทิ้ง · <b>ตรวจก่อนเสมอ แล้วค่อยกดลบ</b><br />
+          ระบบจะไม่แตะไฟล์ที่อัปโหลดภายใน 7 วันล่าสุด เพื่อกันลบของใบสมัครที่กำลังกรอกอยู่
+        </p>
+
+        {err ? (
+          <div style={{ padding: "10px 13px", borderRadius: 10, background: "var(--red-soft, #fde8ec)",
+                        color: "#be123c", fontSize: 12.5, marginBottom: 12 }}>{err}</div>
+        ) : null}
+
+        {res ? (
+          <div style={{ padding: "11px 14px", borderRadius: 10, marginBottom: 12, fontSize: 12.5, lineHeight: 1.8,
+                        background: res.dry_run ? "var(--accent-soft)" : "var(--green-soft, #e7f6ec)",
+                        color: res.dry_run ? "var(--accent-700)" : "#15803d" }}>
+            {res.dry_run
+              ? <>พบไฟล์กำพร้า <b>{res.total_orphans}</b> ไฟล์ · รวม <b>{res.total_mb} MB</b>
+                  {res.total_orphans > 0 ? " — กด “ลบไฟล์กำพร้า” เพื่อลบถาวร" : " — ไม่มีอะไรต้องลบ"}</>
+              : <>ลบไปแล้ว <b>{res.total_deleted}</b> ไฟล์ · คืนพื้นที่ <b>{res.total_mb} MB</b></>}
+            <br />
+            <span className="muted" style={{ fontSize: 11.5 }}>
+              เอกสาร {(res.by_bucket?.["applicant-docs"]?.["กำพร้า"]) ?? 0} ไฟล์ ·
+              รูปถ่าย {(res.by_bucket?.["applicant-photos"]?.["กำพร้า"]) ?? 0} ไฟล์
+            </span>
+          </div>
+        ) : null}
+
+        <div className="row" style={{ gap: 9 }}>
+          <button className="btn btn-ghost" onClick={() => run(true)} disabled={busy}>
+            {busy ? "กำลังทำงาน…" : "ตรวจดูก่อน"}
+          </button>
+          {res && res.dry_run && res.total_orphans > 0 ? (
+            <button className="btn btn-pri" onClick={() => run(false)} disabled={busy}>
+              ลบไฟล์กำพร้า {res.total_orphans} ไฟล์
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </Card>
   );
 }
 
