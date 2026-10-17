@@ -61,8 +61,16 @@ function HRCUserForm({ user, onClose }) {
 
   const save = async () => {
     setErr(""); setBusy(true);
-    const before = { role_code: user.role_code, employee_id: user.employee_id, active: user.active };
-    const after = { role_code: roleCode, employee_id: empId || null, active };
+    // ⚠️ ต้องเขียน role คู่กับ role_code เสมอ
+    // เพราะฟังก์ชันสิทธิ์ในฐานข้อมูล (app_role, in_my_scope, is_hr_admin, can_see_employee)
+    // อ่านจากคอลัมน์ role ตัวเล็กเท่านั้น ถ้าเขียนแค่ role_code สิทธิ์จริงจะไม่เปลี่ยนตาม
+    const ROLE_OF = {
+      SUPER_ADMIN: "admin", HR_ADMIN: "admin", HR: "hr",
+      MANAGER: "manager", SUPERVISOR: "supervisor", VIEWER: "viewer", EMPLOYEE: "viewer",
+    };
+    const before = { role: user.role, role_code: user.role_code, employee_id: user.employee_id, active: user.active };
+    const after = { role: ROLE_OF[roleCode] || "viewer", role_code: roleCode,
+                    employee_id: empId || null, active };
     const { error } = await window.sb.from("app_users").update(after).eq("id", user.id);
     setBusy(false);
     if (error) { setErr("บันทึกไม่สำเร็จ: " + error.message); return; }
