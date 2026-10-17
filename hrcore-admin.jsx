@@ -46,10 +46,84 @@ function HRCUsers() {
   );
 }
 
+/* ลบบัญชีผู้ใช้ — กันลบตัวเองและกันลบผู้ดูแลคนสุดท้ายจนไม่มีใครเข้าระบบได้ */
+function HRCUserDelete({ user, onDone }) {
+  const [busy, setBusy] = useA1(false);
+  const [confirm, setConfirm] = useA1(false);
+  const [err, setErr] = useA1("");
+
+  const [adminCount, setAdminCount] = useA1(null);
+
+  const me = (HRC.user || {}).email || "";
+  const isSelf = String(user.email || "").toLowerCase() === String(me).toLowerCase();
+  const userIsAdmin = ["admin", "hr"].indexOf(String(user.role || "").toLowerCase()) > -1 && user.active;
+
+  // นับผู้ดูแลที่เปิดใช้งานอยู่จากฐานข้อมูลโดยตรง เพื่อกันลบจนไม่เหลือใครเข้าระบบได้
+  useAE1(() => { (async () => {
+    const { count } = await window.sb.from("app_users")
+      .select("id", { count: "exact", head: true })
+      .eq("active", true).in("role", ["admin", "hr"]);
+    setAdminCount(typeof count === "number" ? count : null);
+  })(); }, []);
+
+  const isLastAdmin = userIsAdmin && adminCount !== null && adminCount <= 1;
+
+  const blocker = isSelf ? "ลบบัญชีของตัวเองไม่ได้"
+    : isLastAdmin ? "ลบไม่ได้ — นี่คือผู้ดูแลระบบที่เปิดใช้งานคนสุดท้าย ถ้าลบจะไม่มีใครเข้าจัดการระบบได้อีก"
+    : "";
+
+  const remove = async () => {
+    setBusy(true); setErr("");
+    const { error } = await window.sb.from("app_users").delete().eq("id", user.id);
+    setBusy(false);
+    if (error) { setErr("ลบไม่สำเร็จ: " + error.message); return; }
+    await HRC.audit("ลบบัญชีผู้ใช้", "DELETE", "app_users", user.id, user, null);
+    await HRC.load();
+    toast("ลบบัญชี " + user.email + " แล้ว", "check");
+    if (onDone) onDone();
+  };
+
+  return (
+    <div style={{ marginTop: 4, paddingTop: 14, borderTop: "1px solid var(--border-2)" }}>
+      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: "var(--danger, #e11d48)" }}>ลบบัญชีนี้</div>
+
+      {err ? <div style={{ padding: "9px 12px", borderRadius: 9, background: "var(--red-soft, #fde8ec)",
+                           color: "#be123c", fontSize: 12.5, marginBottom: 10 }}>{err}</div> : null}
+
+      {blocker ? (
+        <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.8 }}>{blocker}</div>
+      ) : !confirm ? (
+        <div>
+          <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.8, marginBottom: 9 }}>
+            ถ้าแค่พนักงานลาออก แนะนำให้<b>เอาเครื่องหมายถูก "เปิดใช้งานบัญชี" ออก</b>แทนการลบ —
+            ตัดสิทธิ์ได้ทันทีเหมือนกัน แต่ประวัติว่าใครทำอะไรไว้จะยังอ่านออก<br />
+            การลบเหมาะกับตอนรีเซ็ตระบบใหม่เท่านั้น
+          </div>
+          <button className="btn btn-ghost" style={{ color: "var(--danger, #e11d48)" }}
+            onClick={() => setConfirm(true)} disabled={busy}>ลบบัญชีถาวร</button>
+        </div>
+      ) : (
+        <div>
+          <div style={{ fontSize: 12.5, lineHeight: 1.8, marginBottom: 9 }}>
+            ยืนยันลบ <b>{user.email}</b> ถาวร? ย้อนกลับไม่ได้<br />
+            <span className="muted">บัญชีล็อกอินใน Supabase Auth จะยังอยู่ แต่จะไม่มีสิทธิ์อะไรเลย (เห็นข้อมูล 0 รายการ)</span>
+          </div>
+          <div className="row" style={{ gap: 8 }}>
+            <button className="btn btn-pri" style={{ background: "var(--danger, #e11d48)" }}
+              onClick={remove} disabled={busy}>{busy ? "กำลังลบ…" : "ยืนยันลบถาวร"}</button>
+            <button className="btn btn-ghost" onClick={() => setConfirm(false)} disabled={busy}>ยกเลิก</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function HRCUserForm({ user, onClose }) {
   const [roleCode, setRoleCode] = useA1(user.role_code || "EMPLOYEE");
   const [empId, setEmpId] = useA1(user.employee_id || "");
   const [active, setActive] = useA1(!!user.active);
+  const [scope, setScope] = useA1(Array.isArray(user.dept_scope) ? user.dept_scope : []);
   const [roles, setRoles] = useA1([]);
   const [busy, setBusy] = useA1(false);
   const [err, setErr] = useA1("");
@@ -68,9 +142,12 @@ function HRCUserForm({ user, onClose }) {
       SUPER_ADMIN: "admin", HR_ADMIN: "admin", HR: "hr",
       MANAGER: "manager", SUPERVISOR: "supervisor", VIEWER: "viewer", EMPLOYEE: "viewer",
     };
-    const before = { role: user.role, role_code: user.role_code, employee_id: user.employee_id, active: user.active };
+    const allAccess = ["SUPER_ADMIN", "HR_ADMIN", "HR"].indexOf(roleCode) > -1;
+    const before = { role: user.role, role_code: user.role_code, employee_id: user.employee_id,
+                     active: user.active, dept_scope: user.dept_scope };
     const after = { role: ROLE_OF[roleCode] || "viewer", role_code: roleCode,
-                    employee_id: empId || null, active };
+                    employee_id: empId || null, active,
+                    dept_scope: allAccess ? null : (scope.length ? scope : null) };
     const { error } = await window.sb.from("app_users").update(after).eq("id", user.id);
     setBusy(false);
     if (error) { setErr("บันทึกไม่สำเร็จ: " + error.message); return; }
@@ -97,10 +174,34 @@ function HRCUserForm({ user, onClose }) {
           </select>
           <span className="muted" style={{ fontSize: 11.5 }}>ข้อมูลพนักงานดึงจาก HR Core เท่านั้น ไม่เก็บซ้ำในบัญชีผู้ใช้</span>
         </div>
+        <div className="field"><label>ขอบเขตหน่วยงานที่ดูแล</label>
+          <div className="muted" style={{ fontSize: 11.5, marginBottom: 7, lineHeight: 1.7 }}>
+            {["SUPER_ADMIN", "HR_ADMIN", "HR"].indexOf(roleCode) > -1
+              ? "บทบาทนี้เห็นทั้งองค์กรอยู่แล้ว ไม่ต้องเลือกหน่วยงาน"
+              : "ไม่เลือกเลย = เห็นเฉพาะหน่วยงานของตัวเอง · เลือกได้หลายหน่วยงานถ้าดูแลข้ามฝ่าย"}
+          </div>
+          {["SUPER_ADMIN", "HR_ADMIN", "HR"].indexOf(roleCode) > -1 ? null : (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5,
+                          maxHeight: 190, overflowY: "auto", border: "1px solid var(--border)",
+                          borderRadius: 9, padding: 9 }}>
+              {(HRC.departments || []).map((d) => (
+                <label key={d.id} className="row" style={{ gap: 6, fontSize: 12.5, cursor: "pointer" }}>
+                  <input type="checkbox" checked={scope.indexOf(d.id) > -1}
+                    onChange={(e) => setScope(e.target.checked
+                      ? scope.concat([d.id])
+                      : scope.filter((x) => x !== d.id))}
+                    style={{ width: 15, height: 15, accentColor: "var(--accent)" }} />
+                  {d.short || d.name}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
         <label className="row" style={{ gap: 9, fontSize: 13.5, cursor: "pointer" }}>
           <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} style={{ width: 16, height: 16, accentColor: "var(--accent)" }} />
           เปิดใช้งานบัญชี
         </label>
+        <HRCUserDelete user={user} onDone={onClose} />
       </div>
     </HRCDrawer>
   );

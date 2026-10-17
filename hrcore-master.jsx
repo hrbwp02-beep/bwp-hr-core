@@ -177,6 +177,76 @@ function HRCDepartments({ nav }) {
   );
 }
 
+/* ลบหน่วยงาน — ตรวจสิ่งที่ยังอ้างถึงก่อนเสมอ ไม่ให้ลบจนข้อมูลพนักงานกำพร้า */
+function HRCDeptDelete({ dept, onDone }) {
+  const [busy, setBusy] = useM1(false);
+  const [confirm, setConfirm] = useM1(false);
+  const [err, setErr] = useM1("");
+
+  const emps = (HRC.employees || []).filter((e) => e.dept === dept.id);
+  const empsActive = emps.filter((e) => HRC.isActive(e));
+  const poss = (HRC.positions || []).filter((p) => p.department_id === dept.id);
+  const kids = (HRC.departments || []).filter((d) => d.parent_department_id === dept.id);
+
+  const blockers = [];
+  if (empsActive.length) blockers.push("มีพนักงานที่ยังทำงานอยู่ " + empsActive.length + " คน");
+  if (emps.length - empsActive.length > 0) blockers.push("มีประวัติพนักงานที่ลาออกแล้ว " + (emps.length - empsActive.length) + " คน");
+  if (poss.length) blockers.push("มีตำแหน่งงานผูกอยู่ " + poss.length + " ตำแหน่ง");
+  if (kids.length) blockers.push("มีหน่วยงานย่อย " + kids.length + " หน่วยงาน");
+
+  const remove = async () => {
+    setBusy(true); setErr("");
+    const { error } = await window.sb.from("hr_departments").delete().eq("id", dept.id);
+    setBusy(false);
+    if (error) { setErr("ลบไม่สำเร็จ: " + error.message); return; }
+    await HRC.audit("ลบหน่วยงาน", "DELETE", "hr_departments", dept.id, dept, null);
+    await HRC.load();
+    toast("ลบหน่วยงาน " + dept.name + " แล้ว", "check");
+    if (onDone) onDone();
+  };
+
+  return (
+    <div style={{ marginTop: 6, paddingTop: 14, borderTop: "1px solid var(--border-2)" }}>
+      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6, color: "var(--danger, #e11d48)" }}>ลบหน่วยงานนี้</div>
+
+      {err ? <div style={{ padding: "9px 12px", borderRadius: 9, background: "var(--red-soft, #fde8ec)",
+                           color: "#be123c", fontSize: 12.5, marginBottom: 10 }}>{err}</div> : null}
+
+      {blockers.length ? (
+        <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.85 }}>
+          ลบไม่ได้เพราะยังมีข้อมูลผูกอยู่:
+          <ul style={{ margin: "5px 0 0", paddingLeft: 18 }}>
+            {blockers.map((b, i) => <li key={i}>{b}</li>)}
+          </ul>
+          <div style={{ marginTop: 7 }}>
+            ย้ายพนักงานและตำแหน่งงานไปหน่วยงานอื่นก่อน หรือถ้าแค่ต้องการเลิกใช้
+            ให้เปลี่ยน <b>สถานะ</b> ด้านบนเป็น "ปิดใช้งาน" แทน — ประวัติจะยังอยู่ครบ
+          </div>
+        </div>
+      ) : !confirm ? (
+        <div>
+          <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.8, marginBottom: 9 }}>
+            หน่วยงานนี้ไม่มีพนักงานและตำแหน่งงานผูกอยู่ ลบได้อย่างปลอดภัย
+          </div>
+          <button className="btn btn-ghost" style={{ color: "var(--danger, #e11d48)" }}
+            onClick={() => setConfirm(true)} disabled={busy}>ลบหน่วยงาน</button>
+        </div>
+      ) : (
+        <div>
+          <div style={{ fontSize: 12.5, lineHeight: 1.8, marginBottom: 9 }}>
+            ยืนยันลบ <b>{dept.name}</b> ถาวร? การลบย้อนกลับไม่ได้
+          </div>
+          <div className="row" style={{ gap: 8 }}>
+            <button className="btn btn-pri" style={{ background: "var(--danger, #e11d48)" }}
+              onClick={remove} disabled={busy}>{busy ? "กำลังลบ…" : "ยืนยันลบถาวร"}</button>
+            <button className="btn btn-ghost" onClick={() => setConfirm(false)} disabled={busy}>ยกเลิก</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function HRCDeptForm({ dept, onClose }) {
   const isEdit = !!dept;
   const [f, setF] = useM1(() => ({
@@ -186,6 +256,7 @@ function HRCDeptForm({ dept, onClose }) {
     short: (dept && dept.short) || "",
     parent_department_id: (dept && dept.parent_department_id) || "",
     manager_id: (dept && dept.manager_id) || "",
+    supervisor_id: (dept && dept.supervisor_id) || "",
     description: (dept && dept.description) || "",
     status: (dept && dept.status) || "ACTIVE",
   }));
@@ -201,7 +272,8 @@ function HRCDeptForm({ dept, onClose }) {
     const row = {
       department_code: f.department_code.trim().toUpperCase(), name: f.name.trim(),
       short: f.short.trim() || f.name.trim(), parent_department_id: f.parent_department_id || null,
-      manager_id: f.manager_id || null, description: f.description.trim() || null, status: f.status,
+      manager_id: f.manager_id || null, supervisor_id: f.supervisor_id || null,
+      description: f.description.trim() || null, status: f.status,
     };
     let error;
     if (isEdit) ({ error } = await window.sb.from("hr_departments").update(row).eq("id", dept.id));
@@ -239,7 +311,19 @@ function HRCDeptForm({ dept, onClose }) {
           <select className="select" value={f.manager_id} onChange={(e) => set("manager_id", e.target.value)}>
             <option value="">— ไม่ระบุ —</option>
             {(HRC.employees || []).filter((e) => HRC.isActive(e)).map((e) => <option key={e.id} value={e.id}>{e._fullName}</option>)}
-          </select></div>
+          </select>
+          <div className="muted" style={{ fontSize: 11.5, marginTop: 4 }}>
+            มีผลต่อสิทธิ์การมองเห็นข้อมูล — ผู้จัดการจะถูกมองเห็นโดยทุกคนเพื่อให้ผังองค์กรใช้งานได้
+          </div></div>
+        <div className="field"><label>หัวหน้าหน่วยงาน</label>
+          <select className="select" value={f.supervisor_id} onChange={(e) => set("supervisor_id", e.target.value)}>
+            <option value="">— ไม่ระบุ —</option>
+            {(HRC.employees || []).filter((e) => HRC.isActive(e)).map((e) => <option key={e.id} value={e.id}>{e._fullName}</option>)}
+          </select>
+          <div className="muted" style={{ fontSize: 11.5, marginTop: 4 }}>
+            ใช้คู่กับผู้จัดการในการกำหนดสิทธิ์ · เว้นว่างได้ถ้าไม่มีหัวหน้าแยกต่างหาก
+          </div></div>
+        {isEdit ? <HRCDeptDelete dept={dept} onDone={onClose} /> : null}
         <div className="field"><label>สถานะ</label>
           <select className="select" value={f.status} onChange={(e) => set("status", e.target.value)}>
             <option value="ACTIVE">เปิดใช้งาน</option><option value="INACTIVE">ปิดใช้งาน</option>
