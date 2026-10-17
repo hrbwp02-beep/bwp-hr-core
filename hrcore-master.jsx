@@ -183,16 +183,12 @@ function HRCDeptDelete({ dept, onDone }) {
   const [confirm, setConfirm] = useM1(false);
   const [err, setErr] = useM1("");
 
-  const emps = (HRC.employees || []).filter((e) => e.dept === dept.id);
-  const empsActive = emps.filter((e) => HRC.isActive(e));
-  const poss = (HRC.positions || []).filter((p) => p.department_id === dept.id);
-  const kids = (HRC.departments || []).filter((d) => d.parent_department_id === dept.id);
-
-  const blockers = [];
-  if (empsActive.length) blockers.push("มีพนักงานที่ยังทำงานอยู่ " + empsActive.length + " คน");
-  if (emps.length - empsActive.length > 0) blockers.push("มีประวัติพนักงานที่ลาออกแล้ว " + (emps.length - empsActive.length) + " คน");
-  if (poss.length) blockers.push("มีตำแหน่งงานผูกอยู่ " + poss.length + " ตำแหน่ง");
-  if (kids.length) blockers.push("มีหน่วยงานย่อย " + kids.length + " หน่วยงาน");
+  // ถามฐานข้อมูลตรงๆ ว่าอะไรผูกอยู่บ้าง แม่นกว่าเดาจากข้อมูลที่โหลดไว้ในหน้าเว็บ
+  const [chk, setChk] = useM1(null);
+  useME1(() => { (async () => {
+    const { data, error } = await window.sb.rpc("dept_delete_check", { p_dept: dept.id });
+    setChk(error ? { error: error.message } : data);
+  })(); }, []);
 
   const remove = async () => {
     setBusy(true); setErr("");
@@ -212,21 +208,40 @@ function HRCDeptDelete({ dept, onDone }) {
       {err ? <div style={{ padding: "9px 12px", borderRadius: 9, background: "var(--red-soft, #fde8ec)",
                            color: "#be123c", fontSize: 12.5, marginBottom: 10 }}>{err}</div> : null}
 
-      {blockers.length ? (
+      {chk === null ? (
+        <div className="muted" style={{ fontSize: 12.5 }}>กำลังตรวจสอบข้อมูลที่ผูกอยู่…</div>
+      ) : chk.error ? (
+        <div className="muted" style={{ fontSize: 12.5 }}>ตรวจสอบไม่สำเร็จ: {chk.error}</div>
+      ) : !chk.can_delete ? (
         <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.85 }}>
-          ลบไม่ได้เพราะยังมีข้อมูลผูกอยู่:
-          <ul style={{ margin: "5px 0 0", paddingLeft: 18 }}>
-            {blockers.map((b, i) => <li key={i}>{b}</li>)}
+          <b style={{ color: "var(--text)" }}>ลบไม่ได้</b> เพราะยังมีข้อมูลผูกอยู่:
+          <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+            {(chk.blockers || []).map((b, i) => (
+              <li key={i} style={{ marginBottom: 4 }}>
+                <b style={{ color: "var(--text)" }}>{b.what} {b.n} รายการ</b>
+                <br /><span style={{ fontSize: 12 }}>{b.fix}</span>
+              </li>
+            ))}
           </ul>
-          <div style={{ marginTop: 7 }}>
-            ย้ายพนักงานและตำแหน่งงานไปหน่วยงานอื่นก่อน หรือถ้าแค่ต้องการเลิกใช้
-            ให้เปลี่ยน <b>สถานะ</b> ด้านบนเป็น "ปิดใช้งาน" แทน — ประวัติจะยังอยู่ครบ
+          <div style={{ marginTop: 9, paddingTop: 8, borderTop: "1px dashed var(--border-2)" }}>
+            ถ้าแค่ต้องการเลิกใช้ ไม่ได้จะลบประวัติทิ้ง ให้เปลี่ยน <b>สถานะ</b> ด้านบนเป็น
+            "ปิดใช้งาน" แทน — ใช้งานไม่ได้แล้วแต่ประวัติยังอยู่ครบ
           </div>
         </div>
       ) : !confirm ? (
         <div>
           <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.8, marginBottom: 9 }}>
-            หน่วยงานนี้ไม่มีพนักงานและตำแหน่งงานผูกอยู่ ลบได้อย่างปลอดภัย
+            ไม่มีข้อมูลสำคัญผูกอยู่ ลบได้
+            {(chk.warnings || []).length ? (
+              <>
+                <br /><b style={{ color: "var(--warn, #e08a00)" }}>แต่สิ่งเหล่านี้จะได้รับผลกระทบ:</b>
+                <ul style={{ margin: "5px 0 0", paddingLeft: 18 }}>
+                  {chk.warnings.map((w, i) => (
+                    <li key={i}>{w.what} {w.n} รายการ — {w.effect}</li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
           </div>
           <button className="btn btn-ghost" style={{ color: "var(--danger, #e11d48)" }}
             onClick={() => setConfirm(true)} disabled={busy}>ลบหน่วยงาน</button>
